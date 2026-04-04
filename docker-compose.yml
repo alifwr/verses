@@ -2,11 +2,11 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8742:8000"
     environment:
       - DATABASE_URL=sqlite:///./data/verse.db
       - SECRET_KEY=${SECRET_KEY:-verse-secret-key-change-in-production}
-      - CORS_ORIGINS=http://185.223.207.38:3000,http://localhost:3000
+      - CORS_ORIGINS=http://185.223.207.38:3742,http://localhost:3742
     volumes:
       - db-data:/app/data
     restart: unless-stopped
@@ -15,9 +15,9 @@ services:
     build:
       context: ./frontend
       args:
-        NUXT_PUBLIC_API_BASE: http://185.223.207.38:8000
+        NUXT_PUBLIC_API_BASE: http://185.223.207.38:8742
     ports:
-      - "3000:3000"
+      - "3742:3000"
     depends_on:
       - backend
     restart: unless-stopped
