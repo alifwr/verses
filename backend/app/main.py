@@ -7,6 +7,7 @@ from app.database import engine, SessionLocal, Base
 from app.middleware import AdabCurfewMiddleware
 from app.seed import seed_users
 from app.routes.auth import router as auth_router
+from app.routes.rules import router as rules_router
 
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ app.add_middleware(AdabCurfewMiddleware)
 
 
 app.include_router(auth_router)
+app.include_router(rules_router)
 
 
 @app.get("/health")
