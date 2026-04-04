@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     DATABASE_URL: str = "sqlite:///./verse.db"
+    CORS_ORIGINS: str = "http://localhost:3000"
 
 
 settings = Settings()
