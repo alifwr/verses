@@ -9,6 +9,7 @@ from app.seed import seed_users
 from app.routes.auth import router as auth_router
 from app.routes.rules import router as rules_router
 from app.routes.questions import router as questions_router
+from app.routes.milestones import router as milestones_router
 
 
 @asynccontextmanager
@@ -38,6 +39,7 @@ app.add_middleware(AdabCurfewMiddleware)
 app.include_router(auth_router)
 app.include_router(rules_router)
 app.include_router(questions_router)
+app.include_router(milestones_router)
 
 
 @app.get("/health")
