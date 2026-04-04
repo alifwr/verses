@@ -76,5 +76,5 @@ export const useAuth = () => {
     navigateTo('/login')
   }
 
-  return { user, token, isAuthenticated, login, logout, fetchUser, refresh }
+  return { user, token, refreshToken, isAuthenticated, login, logout, fetchUser, refresh }
 }
