@@ -7,7 +7,7 @@ RUN npm install
 
 COPY . .
 
-ARG NUXT_PUBLIC_API_BASE=http://185.223.207.38:8000
+ARG NUXT_PUBLIC_API_BASE=https://verse-api.alifpunya.com
 ENV NUXT_PUBLIC_API_BASE=$NUXT_PUBLIC_API_BASE
 
 RUN npm run build
