@@ -44,7 +44,6 @@ class UserOut(BaseModel):
 class RuleCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    emergency_override: bool = False
 
 
 class RuleOut(BaseModel):
@@ -65,12 +64,10 @@ class RuleOut(BaseModel):
 
 class QuestionCreate(BaseModel):
     text: str
-    emergency_override: bool = False
 
 
 class AnswerCreate(BaseModel):
     text: str
-    emergency_override: bool = False
 
 
 class AnswerOut(BaseModel):
