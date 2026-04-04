@@ -6,7 +6,7 @@ services:
     environment:
       - DATABASE_URL=sqlite:///./data/verse.db
       - SECRET_KEY=${SECRET_KEY:-verse-secret-key-change-in-production}
-      - CORS_ORIGINS=http://185.223.207.38:3742,http://localhost:3742
+      - CORS_ORIGINS=http://185.223.207.38:3742,http://localhost:3742,https://verse.alifpunya.com
     volumes:
       - db-data:/app/data
     restart: unless-stopped
@@ -15,7 +15,7 @@ services:
     build:
       context: ./frontend
       args:
-        NUXT_PUBLIC_API_BASE: http://185.223.207.38:8742
+        NUXT_PUBLIC_API_BASE: https://verse-api.alifpunya.com
     ports:
       - "3742:3000"
     depends_on:
