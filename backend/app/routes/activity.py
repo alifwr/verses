@@ -10,6 +10,7 @@ from app.models import (
     Question,
     Rule,
     RuleSignature,
+    Talk,
     User,
 )
 from app.schemas import ActivityOut
@@ -100,6 +101,16 @@ def get_activity(
                 summary=f'Milestone "{milestone.title}" completed',
                 timestamp=milestone.created_at,
             ))
+
+    # Talk events
+    talks = db.query(Talk).all()
+    for talk in talks:
+        events.append(ActivityOut(
+            type="talk_queued",
+            actor=talk.proposer.display_name,
+            summary=f'Queued talk "{talk.title}"',
+            timestamp=talk.created_at,
+        ))
 
     events.sort(key=lambda e: e.timestamp, reverse=True)
     return events[:20]
