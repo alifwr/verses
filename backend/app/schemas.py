@@ -123,6 +123,47 @@ class MilestoneOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- Talks schemas ---
+
+class TalkCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+
+class TalkUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+
+
+class TalkNoteCreate(BaseModel):
+    text: str
+
+
+class TalkNoteOut(BaseModel):
+    id: int
+    user_id: int
+    username: str
+    text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class TalkOut(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    proposed_by: int
+    proposer_name: str
+    status: str
+    notes: list[TalkNoteOut] = []
+    note_count: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # Activity
 class ActivityOut(BaseModel):
     type: str

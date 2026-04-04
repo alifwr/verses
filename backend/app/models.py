@@ -112,3 +112,30 @@ class MilestoneApproval(Base):
 
     milestone: Mapped["Milestone"] = relationship("Milestone", back_populates="approvals")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
+
+class Talk(Base):
+    __tablename__ = "talks"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    proposed_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="queued", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
+    notes: Mapped[List["TalkNote"]] = relationship("TalkNote", back_populates="talk", cascade="all, delete-orphan")
+
+
+class TalkNote(Base):
+    __tablename__ = "talk_notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    talk_id: Mapped[int] = mapped_column(ForeignKey("talks.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    talk: Mapped["Talk"] = relationship("Talk", back_populates="notes")
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
