@@ -1,10 +1,16 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from typing import Optional, List
 
 from sqlalchemy import String, Boolean, DateTime, Date, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+GMT7 = timezone(timedelta(hours=7))
+
+
+def now_gmt7() -> datetime:
+    return datetime.now(GMT7)
 
 
 class User(Base):
@@ -16,7 +22,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     partner_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     is_online: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     partner: Mapped[Optional["User"]] = relationship("User", remote_side="User.id", foreign_keys=[partner_id])
     sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user")
@@ -29,7 +35,7 @@ class Session(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     token: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="sessions")
@@ -43,7 +49,7 @@ class Rule(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     proposed_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     is_sealed: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
     signatures: Mapped[List["RuleSignature"]] = relationship("RuleSignature", back_populates="rule", cascade="all, delete-orphan")
@@ -55,7 +61,7 @@ class RuleSignature(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     rule_id: Mapped[int] = mapped_column(ForeignKey("rules.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    signed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    signed_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     rule: Mapped["Rule"] = relationship("Rule", back_populates="signatures")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
@@ -67,7 +73,7 @@ class Question(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     asked_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     asker: Mapped["User"] = relationship("User", foreign_keys=[asked_by])
     answers: Mapped[List["Answer"]] = relationship("Answer", back_populates="question")
@@ -80,7 +86,7 @@ class Answer(Base):
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     question: Mapped["Question"] = relationship("Question", back_populates="answers")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
@@ -96,7 +102,7 @@ class Milestone(Base):
     proposed_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     is_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
     approvals: Mapped[List["MilestoneApproval"]] = relationship("MilestoneApproval", back_populates="milestone", cascade="all, delete-orphan")
@@ -108,7 +114,7 @@ class MilestoneApproval(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     milestone_id: Mapped[int] = mapped_column(ForeignKey("milestones.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    approved_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    approved_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     milestone: Mapped["Milestone"] = relationship("Milestone", back_populates="approvals")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
@@ -122,7 +128,7 @@ class Talk(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     proposed_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="queued", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
     notes: Mapped[List["TalkNote"]] = relationship("TalkNote", back_populates="talk", cascade="all, delete-orphan")
@@ -135,7 +141,7 @@ class TalkNote(Base):
     talk_id: Mapped[int] = mapped_column(ForeignKey("talks.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     talk: Mapped["Talk"] = relationship("Talk", back_populates="notes")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
