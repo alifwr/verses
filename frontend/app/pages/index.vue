@@ -24,6 +24,11 @@ interface Milestone {
   is_completed: boolean
 }
 
+interface Talk {
+  id: number
+  status: string
+}
+
 const { user } = useAuth()
 const { api } = useApi()
 
@@ -32,6 +37,7 @@ const activities = ref<Activity[]>([])
 const rules = ref<Rule[]>([])
 const questions = ref<Question[]>([])
 const milestones = ref<Milestone[]>([])
+const talks = ref<Talk[]>([])
 
 const ruleStats = computed(() => {
   const sealed = rules.value.filter(r => r.is_sealed).length
@@ -50,6 +56,12 @@ const milestoneStats = computed(() => {
   const confirmed = milestones.value.filter(m => m.is_confirmed && !m.is_completed).length
   const total = milestones.value.length
   return { completed, confirmed, total }
+})
+
+const talkStats = computed(() => {
+  const queued = talks.value.filter(t => t.status === 'queued').length
+  const followUp = talks.value.filter(t => t.status === 'follow_up').length
+  return { queued, followUp, total: talks.value.length }
 })
 
 function relativeTime(ts: string): string {
@@ -75,6 +87,7 @@ function activityIcon(type: string): string {
     milestone_approved: 'bg-verse-slate',
     milestone_confirmed: 'bg-verse-gold',
     milestone_completed: 'bg-green-500',
+    talk_queued: 'bg-verse-slate',
   }
   return icons[type] || 'bg-verse-slate/30'
 }
@@ -82,16 +95,18 @@ function activityIcon(type: string): string {
 async function loadAll() {
   loading.value = true
   try {
-    const [a, r, q, m] = await Promise.all([
+    const [a, r, q, m, t] = await Promise.all([
       api<Activity[]>('/activity'),
       api<Rule[]>('/rules'),
       api<Question[]>('/questions'),
       api<Milestone[]>('/milestones'),
+      api<Talk[]>('/talks'),
     ])
     activities.value = a.slice(0, 10)
     rules.value = r
     questions.value = q
     milestones.value = m
+    talks.value = t
   } finally {
     loading.value = false
   }
@@ -106,15 +121,15 @@ onMounted(loadAll)
     <div v-if="loading" class="animate-pulse">
       <div class="h-8 bg-verse-slate/10 rounded w-48 mb-2" />
       <div class="h-4 bg-verse-slate/10 rounded w-32 mb-6" />
-      <div class="grid grid-cols-3 gap-3 mb-6">
-        <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-verse-slate/10 p-4">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div v-for="i in 4" :key="i" class="bg-white rounded-xl border border-verse-slate/10 p-4">
           <div class="h-3 bg-verse-slate/10 rounded w-16 mb-2" />
           <div class="h-8 bg-verse-slate/10 rounded w-10 mb-2" />
           <div class="h-4 bg-verse-slate/10 rounded w-24" />
         </div>
       </div>
       <div class="flex gap-2 mb-8">
-        <div v-for="i in 3" :key="i" class="flex-1 h-10 bg-verse-slate/10 rounded-lg" />
+        <div v-for="i in 4" :key="i" class="flex-1 h-10 bg-verse-slate/10 rounded-lg" />
       </div>
       <div class="h-6 bg-verse-slate/10 rounded w-36 mb-4" />
       <div class="bg-white rounded-xl border border-verse-slate/10 divide-y divide-verse-slate/5">
@@ -144,7 +159,7 @@ onMounted(loadAll)
     </div>
 
     <!-- Quick stats -->
-    <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <NuxtLink to="/rules" class="bg-white rounded-xl border border-verse-slate/10 p-4 hover:shadow-md transition">
         <p class="text-xs text-verse-text/50 mb-1">Rules</p>
         <p class="text-2xl font-serif text-verse-text">{{ ruleStats.total }}</p>
@@ -171,6 +186,15 @@ onMounted(loadAll)
           <span v-if="milestoneStats.confirmed" class="stats-pill bg-verse-gold/10 text-verse-gold">{{ milestoneStats.confirmed }} confirmed</span>
         </div>
       </NuxtLink>
+
+      <NuxtLink to="/talks" class="bg-white rounded-xl border border-verse-slate/10 p-4 hover:shadow-md transition">
+        <p class="text-xs text-verse-text/50 mb-1">Talks</p>
+        <p class="text-2xl font-serif text-verse-text">{{ talkStats.total }}</p>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <span class="stats-pill bg-verse-slate/10 text-verse-slate">{{ talkStats.queued }} queued</span>
+          <span v-if="talkStats.followUp" class="stats-pill bg-verse-rose/10 text-verse-rose">{{ talkStats.followUp }} follow-up</span>
+        </div>
+      </NuxtLink>
     </div>
 
     <!-- Quick actions -->
@@ -183,6 +207,9 @@ onMounted(loadAll)
       </NuxtLink>
       <NuxtLink to="/roadmap?new=1" class="flex-1 py-2.5 text-center text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition">
         + Add Milestone
+      </NuxtLink>
+      <NuxtLink to="/talks?new=1" class="flex-1 py-2.5 text-center text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition">
+        + Queue a Talk
       </NuxtLink>
     </div>
 
