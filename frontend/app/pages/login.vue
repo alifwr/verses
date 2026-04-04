@@ -12,7 +12,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await login(username.value, password.value)
-    navigateTo('/ledger')
+    navigateTo('/rules')
   } catch {
     error.value = 'Invalid username or password'
   } finally {

@@ -113,7 +113,7 @@ onMounted(loadAll)
 
     <!-- Quick stats -->
     <div class="grid grid-cols-3 gap-3 mb-6">
-      <NuxtLink to="/ledger" class="bg-white rounded-xl border border-verse-slate/10 p-4 hover:shadow-md transition">
+      <NuxtLink to="/rules" class="bg-white rounded-xl border border-verse-slate/10 p-4 hover:shadow-md transition">
         <p class="text-xs text-verse-text/50 mb-1">Rules</p>
         <p class="text-2xl font-serif text-verse-text">{{ ruleStats.total }}</p>
         <div class="flex gap-2 mt-2 flex-wrap">
@@ -143,7 +143,7 @@ onMounted(loadAll)
 
     <!-- Quick actions -->
     <div class="flex flex-col sm:flex-row gap-2 mb-8">
-      <NuxtLink to="/ledger?new=1" class="flex-1 py-2.5 text-center text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition">
+      <NuxtLink to="/rules?new=1" class="flex-1 py-2.5 text-center text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition">
         + Propose a Rule
       </NuxtLink>
       <NuxtLink to="/inquiry?new=1" class="flex-1 py-2.5 text-center text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition">

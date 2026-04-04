@@ -110,7 +110,7 @@ onMounted(() => {
   <div>
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
       <div>
-        <h1 class="text-2xl font-serif text-verse-text">Distancing Ledger</h1>
+        <h1 class="text-2xl font-serif text-verse-text">Rules</h1>
         <div class="header-gradient-line w-12" />
         <p class="text-sm text-verse-text/50 mt-2">Seal and sign your shared agreements</p>
       </div>

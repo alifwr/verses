@@ -4,7 +4,7 @@ const route = useRoute()
 
 const navItems = [
   { path: '/', label: 'Home', icon: '&#9679;' },
-  { path: '/ledger', label: 'Ledger', icon: '&#9874;' },
+  { path: '/rules', label: 'Rules', icon: '&#9874;' },
   { path: '/inquiry', label: 'Inquiry', icon: '&#10067;' },
   { path: '/roadmap', label: 'Roadmap', icon: '&#9670;' },
 ]
