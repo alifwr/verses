@@ -23,8 +23,6 @@ const loading = ref(true)
 const questions = ref<Question[]>([])
 const showNewForm = ref(false)
 const newText = ref('')
-const showOverrideModal = ref(false)
-const pendingAction = ref<(() => Promise<void>) | null>(null)
 
 async function loadQuestions() {
   try {
@@ -40,48 +38,22 @@ const stats = computed(() => ({
   awaiting: questions.value.filter(q => !q.my_answer).length,
 }))
 
-async function createQuestion(emergencyOverride = false) {
-  try {
-    await api('/questions', {
-      method: 'POST',
-      body: { text: newText.value, emergency_override: emergencyOverride },
-    })
-    newText.value = ''
-    showNewForm.value = false
-    await loadQuestions()
-  } catch (error: any) {
-    if (error?.status === 403 || error?.statusCode === 403) {
-      pendingAction.value = () => createQuestion(true)
-      showOverrideModal.value = true
-      return
-    }
-    throw error
-  }
+async function createQuestion() {
+  await api('/questions', {
+    method: 'POST',
+    body: { text: newText.value },
+  })
+  newText.value = ''
+  showNewForm.value = false
+  await loadQuestions()
 }
 
-async function answerQuestion(questionId: number, text: string, emergencyOverride = false) {
-  try {
-    await api(`/questions/${questionId}/answer`, {
-      method: 'POST',
-      body: { text, emergency_override: emergencyOverride },
-    })
-    await loadQuestions()
-  } catch (error: any) {
-    if (error?.status === 403 || error?.statusCode === 403) {
-      pendingAction.value = () => answerQuestion(questionId, text, true)
-      showOverrideModal.value = true
-      return
-    }
-    throw error
-  }
-}
-
-async function handleOverrideConfirm() {
-  showOverrideModal.value = false
-  if (pendingAction.value) {
-    await pendingAction.value()
-    pendingAction.value = null
-  }
+async function answerQuestion(questionId: number, text: string) {
+  await api(`/questions/${questionId}/answer`, {
+    method: 'POST',
+    body: { text },
+  })
+  await loadQuestions()
 }
 
 onMounted(() => {
@@ -134,7 +106,7 @@ onMounted(() => {
       <span v-if="stats.awaiting" class="stats-pill bg-verse-rose/10 text-verse-rose">{{ stats.awaiting }} awaiting</span>
     </div>
 
-    <form v-if="showNewForm" @submit.prevent="() => createQuestion()" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
+    <form v-if="showNewForm" @submit.prevent="createQuestion" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
       <textarea
         v-model="newText"
         placeholder="What would you like to explore together?"
@@ -159,11 +131,6 @@ onMounted(() => {
       </p>
     </div>
 
-    <EmergencyOverrideModal
-      v-if="showOverrideModal"
-      @confirm="handleOverrideConfirm"
-      @cancel="showOverrideModal = false; pendingAction = null"
-    />
     </template>
   </div>
 </template>

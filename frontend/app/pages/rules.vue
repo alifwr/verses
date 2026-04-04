@@ -20,8 +20,6 @@ const filter = ref<'all' | 'pending' | 'sealed'>('all')
 const showNewForm = ref(false)
 const newTitle = ref('')
 const newDesc = ref('')
-const showOverrideModal = ref(false)
-const pendingAction = ref<(() => Promise<void>) | null>(null)
 const expandedId = ref<number | null>(null)
 
 async function loadRules() {
@@ -66,24 +64,15 @@ function proposerColor(rule: Rule): string {
     : (user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate')
 }
 
-async function createRule(emergencyOverride = false) {
-  try {
-    await api('/rules', {
-      method: 'POST',
-      body: { title: newTitle.value, description: newDesc.value, emergency_override: emergencyOverride },
-    })
-    newTitle.value = ''
-    newDesc.value = ''
-    showNewForm.value = false
-    await loadRules()
-  } catch (error: any) {
-    if (error?.status === 403 || error?.statusCode === 403) {
-      pendingAction.value = () => createRule(true)
-      showOverrideModal.value = true
-      return
-    }
-    throw error
-  }
+async function createRule() {
+  await api('/rules', {
+    method: 'POST',
+    body: { title: newTitle.value, description: newDesc.value },
+  })
+  newTitle.value = ''
+  newDesc.value = ''
+  showNewForm.value = false
+  await loadRules()
 }
 
 async function signRule(rule: Rule) {
@@ -95,14 +84,6 @@ async function signRule(rule: Rule) {
 async function deleteRule(ruleId: number) {
   await api(`/rules/${ruleId}`, { method: 'DELETE' })
   await loadRules()
-}
-
-async function handleOverrideConfirm() {
-  showOverrideModal.value = false
-  if (pendingAction.value) {
-    await pendingAction.value()
-    pendingAction.value = null
-  }
 }
 
 onMounted(() => {
@@ -159,7 +140,7 @@ onMounted(() => {
       <span v-if="stats.pending" class="stats-pill bg-verse-rose/10 text-verse-rose">{{ stats.pending }} pending</span>
     </div>
 
-    <form v-if="showNewForm" @submit.prevent="() => createRule()" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
+    <form v-if="showNewForm" @submit.prevent="createRule" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
       <input v-model="newTitle" placeholder="Rule title" required class="w-full px-3 py-2 rounded-lg border border-verse-slate/20 mb-3 focus:outline-none focus:ring-2 focus:ring-verse-slate/30 text-sm" />
       <textarea v-model="newDesc" placeholder="Describe the rule..." required rows="3" class="w-full px-3 py-2 rounded-lg border border-verse-slate/20 mb-3 focus:outline-none focus:ring-2 focus:ring-verse-slate/30 resize-none text-sm" />
       <button type="submit" class="px-4 py-2 bg-verse-slate text-white text-sm rounded-lg hover:bg-verse-slate/90 transition">Propose Rule</button>
@@ -288,11 +269,6 @@ onMounted(() => {
       </p>
     </div>
 
-    <EmergencyOverrideModal
-      v-if="showOverrideModal"
-      @confirm="handleOverrideConfirm"
-      @cancel="showOverrideModal = false; pendingAction = null"
-    />
     </template>
   </div>
 </template>
