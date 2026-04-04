@@ -11,6 +11,7 @@ from app.routes.rules import router as rules_router
 from app.routes.questions import router as questions_router
 from app.routes.milestones import router as milestones_router
 from app.routes.activity import router as activity_router
+from app.routes.talks import router as talks_router
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(rules_router)
 app.include_router(questions_router)
 app.include_router(milestones_router)
 app.include_router(activity_router)
+app.include_router(talks_router)
 
 
 @app.get("/health")
