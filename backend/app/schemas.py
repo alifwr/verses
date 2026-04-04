@@ -124,3 +124,11 @@ class MilestoneOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# Activity
+class ActivityOut(BaseModel):
+    type: str
+    actor: str
+    summary: str
+    timestamp: datetime
