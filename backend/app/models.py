@@ -46,7 +46,7 @@ class Rule(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
-    signatures: Mapped[List["RuleSignature"]] = relationship("RuleSignature", back_populates="rule")
+    signatures: Mapped[List["RuleSignature"]] = relationship("RuleSignature", back_populates="rule", cascade="all, delete-orphan")
 
 
 class RuleSignature(Base):
@@ -99,7 +99,7 @@ class Milestone(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])
-    approvals: Mapped[List["MilestoneApproval"]] = relationship("MilestoneApproval", back_populates="milestone")
+    approvals: Mapped[List["MilestoneApproval"]] = relationship("MilestoneApproval", back_populates="milestone", cascade="all, delete-orphan")
 
 
 class MilestoneApproval(Base):

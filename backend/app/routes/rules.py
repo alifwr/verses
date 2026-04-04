@@ -46,6 +46,12 @@ def create_rule(
         proposed_by=current_user.id,
     )
     db.add(rule)
+    db.flush()
+
+    # Auto-sign for proposer
+    sig = RuleSignature(rule_id=rule.id, user_id=current_user.id)
+    db.add(sig)
+
     db.commit()
     db.refresh(rule)
     partner_id = current_user.partner_id
@@ -68,11 +74,12 @@ def sign_rule(
         .filter(RuleSignature.rule_id == rule_id, RuleSignature.user_id == current_user.id)
         .first()
     )
-    if existing is None:
-        signature = RuleSignature(rule_id=rule_id, user_id=current_user.id)
-        db.add(signature)
-        db.commit()
-        db.refresh(rule)
+    if existing is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already signed")
+    signature = RuleSignature(rule_id=rule_id, user_id=current_user.id)
+    db.add(signature)
+    db.commit()
+    db.refresh(rule)
 
     # Seal if 2 or more signatures
     if len(rule.signatures) >= 2 and not rule.is_sealed:

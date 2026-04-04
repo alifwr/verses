@@ -11,6 +11,8 @@ def test_create_milestone(client, alif_token):
     data = resp.json()
     assert data["title"] == "Get engaged"
     assert data["is_confirmed"] is False
+    assert data["is_approved_by_me"] is True
+    assert data["is_approved_by_partner"] is False
 
 
 def test_list_milestones(client, alif_token):
@@ -20,11 +22,10 @@ def test_list_milestones(client, alif_token):
     assert len(resp.json()) >= 1
 
 
-def test_approve_milestone_mutual(client, alif_token, syifa_token):
+def test_partner_approve_confirms_milestone(client, alif_token, syifa_token):
     create = client.post("/milestones", json={"title": "M1", "description": "D1"}, headers=auth_header(alif_token))
     mid = create.json()["id"]
 
-    client.post(f"/milestones/{mid}/approve", headers=auth_header(alif_token))
     resp = client.get("/milestones", headers=auth_header(alif_token))
     m = [x for x in resp.json() if x["id"] == mid][0]
     assert m["is_approved_by_me"] is True
@@ -34,6 +35,13 @@ def test_approve_milestone_mutual(client, alif_token, syifa_token):
     resp = client.get("/milestones", headers=auth_header(alif_token))
     m = [x for x in resp.json() if x["id"] == mid][0]
     assert m["is_confirmed"] is True
+
+
+def test_proposer_cannot_double_approve(client, alif_token):
+    create = client.post("/milestones", json={"title": "M1", "description": "D1"}, headers=auth_header(alif_token))
+    mid = create.json()["id"]
+    resp = client.post(f"/milestones/{mid}/approve", headers=auth_header(alif_token))
+    assert resp.status_code == 400
 
 
 def test_update_milestone(client, alif_token):
@@ -54,7 +62,6 @@ def test_delete_milestone_by_proposer(client, alif_token):
 def test_cannot_delete_confirmed_milestone(client, alif_token, syifa_token):
     create = client.post("/milestones", json={"title": "M1", "description": "D1"}, headers=auth_header(alif_token))
     mid = create.json()["id"]
-    client.post(f"/milestones/{mid}/approve", headers=auth_header(alif_token))
     client.post(f"/milestones/{mid}/approve", headers=auth_header(syifa_token))
     resp = client.delete(f"/milestones/{mid}", headers=auth_header(alif_token))
     assert resp.status_code == 400

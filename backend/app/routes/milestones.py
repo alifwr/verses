@@ -54,6 +54,12 @@ def create_milestone(
         proposed_by=current_user.id,
     )
     db.add(milestone)
+    db.flush()
+
+    # Auto-approve for proposer
+    approval = MilestoneApproval(milestone_id=milestone.id, user_id=current_user.id)
+    db.add(approval)
+
     db.commit()
     db.refresh(milestone)
     partner_id = current_user.partner_id
@@ -75,11 +81,12 @@ def approve_milestone(
         .filter(MilestoneApproval.milestone_id == milestone_id, MilestoneApproval.user_id == current_user.id)
         .first()
     )
-    if existing is None:
-        approval = MilestoneApproval(milestone_id=milestone_id, user_id=current_user.id)
-        db.add(approval)
-        db.commit()
-        db.refresh(milestone)
+    if existing is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already approved")
+    approval = MilestoneApproval(milestone_id=milestone_id, user_id=current_user.id)
+    db.add(approval)
+    db.commit()
+    db.refresh(milestone)
 
     if len(milestone.approvals) >= 2 and not milestone.is_confirmed:
         milestone.is_confirmed = True
