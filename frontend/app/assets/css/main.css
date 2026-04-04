@@ -11,3 +11,29 @@
     @apply font-serif;
   }
 }
+
+@layer components {
+  .header-gradient-line {
+    @apply h-0.5 mt-2 rounded-full;
+    background: linear-gradient(to right, #6B7FA3, #C5A55A);
+  }
+
+  .stats-pill {
+    @apply px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .avatar-dot {
+    @apply w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white;
+  }
+}
+
+@layer utilities {
+  .animate-soft-pulse {
+    animation: soft-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes soft-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+}
