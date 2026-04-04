@@ -1,6 +1,7 @@
 services:
   backend:
     build: ./backend
+    container_name: verse-backend
     ports:
       - "8742:8000"
     environment:
@@ -16,15 +17,16 @@ services:
       context: ./frontend
       args:
         NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-https://verse-api.alifpunya.com}
+    container_name: verse-frontend
     ports:
       - "3742:3000"
     depends_on:
       - backend
     restart: unless-stopped
-    
+
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflare-tunnel
+    container_name: verse-tunnel
     restart: always
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
 
