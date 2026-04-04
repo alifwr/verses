@@ -27,6 +27,7 @@ interface Milestone {
 const { user } = useAuth()
 const { api } = useApi()
 
+const loading = ref(true)
 const activities = ref<Activity[]>([])
 const rules = ref<Rule[]>([])
 const questions = ref<Question[]>([])
@@ -79,16 +80,21 @@ function activityIcon(type: string): string {
 }
 
 async function loadAll() {
-  const [a, r, q, m] = await Promise.all([
-    api<Activity[]>('/activity'),
-    api<Rule[]>('/rules'),
-    api<Question[]>('/questions'),
-    api<Milestone[]>('/milestones'),
-  ])
-  activities.value = a.slice(0, 10)
-  rules.value = r
-  questions.value = q
-  milestones.value = m
+  loading.value = true
+  try {
+    const [a, r, q, m] = await Promise.all([
+      api<Activity[]>('/activity'),
+      api<Rule[]>('/rules'),
+      api<Question[]>('/questions'),
+      api<Milestone[]>('/milestones'),
+    ])
+    activities.value = a.slice(0, 10)
+    rules.value = r
+    questions.value = q
+    milestones.value = m
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(loadAll)
@@ -96,6 +102,32 @@ onMounted(loadAll)
 
 <template>
   <div>
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="animate-pulse">
+      <div class="h-8 bg-verse-slate/10 rounded w-48 mb-2" />
+      <div class="h-4 bg-verse-slate/10 rounded w-32 mb-6" />
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-verse-slate/10 p-4">
+          <div class="h-3 bg-verse-slate/10 rounded w-16 mb-2" />
+          <div class="h-8 bg-verse-slate/10 rounded w-10 mb-2" />
+          <div class="h-4 bg-verse-slate/10 rounded w-24" />
+        </div>
+      </div>
+      <div class="flex gap-2 mb-8">
+        <div v-for="i in 3" :key="i" class="flex-1 h-10 bg-verse-slate/10 rounded-lg" />
+      </div>
+      <div class="h-6 bg-verse-slate/10 rounded w-36 mb-4" />
+      <div class="bg-white rounded-xl border border-verse-slate/10 divide-y divide-verse-slate/5">
+        <div v-for="i in 4" :key="i" class="flex items-center gap-3 px-4 py-3">
+          <div class="w-2 h-2 rounded-full bg-verse-slate/10" />
+          <div class="flex-1 h-4 bg-verse-slate/10 rounded" />
+          <div class="w-12 h-3 bg-verse-slate/10 rounded" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Welcome header -->
+    <template v-else>
     <!-- Welcome header -->
     <div class="mb-6">
       <h1 class="text-2xl font-serif text-verse-text">
@@ -183,5 +215,6 @@ onMounted(loadAll)
       <span class="w-1.5 h-1.5 rounded-full bg-verse-slate/20" />
       <span class="w-1 h-1 rounded-full bg-verse-slate/15" />
     </div>
+    </template>
   </div>
 </template>

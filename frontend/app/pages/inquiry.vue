@@ -19,6 +19,7 @@ interface Question {
 
 const { api } = useApi()
 const route = useRoute()
+const loading = ref(true)
 const questions = ref<Question[]>([])
 const showNewForm = ref(false)
 const newText = ref('')
@@ -26,7 +27,11 @@ const showOverrideModal = ref(false)
 const pendingAction = ref<(() => Promise<void>) | null>(null)
 
 async function loadQuestions() {
-  questions.value = await api<Question[]>('/questions')
+  try {
+    questions.value = await api<Question[]>('/questions')
+  } finally {
+    loading.value = false
+  }
 }
 
 const stats = computed(() => ({
@@ -87,6 +92,28 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="animate-pulse">
+      <div class="flex justify-between mb-4">
+        <div>
+          <div class="h-8 bg-verse-slate/10 rounded w-36 mb-2" />
+          <div class="h-4 bg-verse-slate/10 rounded w-52" />
+        </div>
+        <div class="h-10 bg-verse-slate/10 rounded w-32" />
+      </div>
+      <div class="flex gap-2 mb-4">
+        <div v-for="i in 3" :key="i" class="h-6 bg-verse-slate/10 rounded-full w-20" />
+      </div>
+      <div class="space-y-4">
+        <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-verse-slate/10 p-5">
+          <div class="h-5 bg-verse-slate/10 rounded w-3/4 mb-3" />
+          <div class="h-4 bg-verse-slate/10 rounded w-1/2 mb-2" />
+          <div class="h-10 bg-verse-slate/10 rounded w-full" />
+        </div>
+      </div>
+    </div>
+
+    <template v-else>
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
       <div>
         <h1 class="text-2xl font-serif text-verse-text">Inquiry Hub</h1>
@@ -137,5 +164,6 @@ onMounted(() => {
       @confirm="handleOverrideConfirm"
       @cancel="showOverrideModal = false; pendingAction = null"
     />
+    </template>
   </div>
 </template>

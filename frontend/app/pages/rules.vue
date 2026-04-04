@@ -14,6 +14,7 @@ interface Rule {
 const { user } = useAuth()
 const { api } = useApi()
 const route = useRoute()
+const loading = ref(true)
 const rules = ref<Rule[]>([])
 const filter = ref<'all' | 'pending' | 'sealed'>('all')
 const showNewForm = ref(false)
@@ -24,7 +25,11 @@ const pendingAction = ref<(() => Promise<void>) | null>(null)
 const expandedId = ref<number | null>(null)
 
 async function loadRules() {
-  rules.value = await api<Rule[]>('/rules')
+  try {
+    rules.value = await api<Rule[]>('/rules')
+  } finally {
+    loading.value = false
+  }
 }
 
 const filteredRules = computed(() => {
@@ -108,6 +113,32 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="animate-pulse">
+      <div class="flex justify-between mb-4">
+        <div>
+          <div class="h-8 bg-verse-slate/10 rounded w-32 mb-2" />
+          <div class="h-4 bg-verse-slate/10 rounded w-48" />
+        </div>
+        <div class="h-10 bg-verse-slate/10 rounded w-28" />
+      </div>
+      <div class="flex gap-2 mb-4">
+        <div v-for="i in 3" :key="i" class="h-6 bg-verse-slate/10 rounded-full w-20" />
+      </div>
+      <div class="bg-white rounded-xl border border-verse-slate/10 overflow-hidden">
+        <div class="px-4 py-2.5 bg-verse-slate/[0.04] border-b border-verse-slate/5">
+          <div class="h-3 bg-verse-slate/10 rounded w-full" />
+        </div>
+        <div v-for="i in 4" :key="i" class="flex items-center gap-3 px-4 py-3 border-b border-verse-slate/5 last:border-b-0">
+          <div class="w-2.5 h-2.5 rounded-full bg-verse-slate/10" />
+          <div class="flex-1 h-4 bg-verse-slate/10 rounded" />
+          <div class="w-16 h-4 bg-verse-slate/10 rounded" />
+          <div class="w-20 h-6 bg-verse-slate/10 rounded-full" />
+        </div>
+      </div>
+    </div>
+
+    <template v-else>
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
       <div>
         <h1 class="text-2xl font-serif text-verse-text">Rules</h1>
@@ -262,5 +293,6 @@ onMounted(() => {
       @confirm="handleOverrideConfirm"
       @cancel="showOverrideModal = false; pendingAction = null"
     />
+    </template>
   </div>
 </template>

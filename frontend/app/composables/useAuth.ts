@@ -49,7 +49,6 @@ export const useAuth = () => {
       user.value = data
     } catch {
       token.value = null
-      refreshToken.value = null
       user.value = null
     }
   }

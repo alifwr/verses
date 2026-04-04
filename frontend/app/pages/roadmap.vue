@@ -15,6 +15,7 @@ interface Milestone {
 
 const { api } = useApi()
 const route = useRoute()
+const loading = ref(true)
 const milestones = ref<Milestone[]>([])
 const showNewForm = ref(false)
 const newTitle = ref('')
@@ -22,7 +23,11 @@ const newDesc = ref('')
 const newDate = ref('')
 
 async function loadMilestones() {
-  milestones.value = await api<Milestone[]>('/milestones')
+  try {
+    milestones.value = await api<Milestone[]>('/milestones')
+  } finally {
+    loading.value = false
+  }
 }
 
 const stats = computed(() => {
@@ -73,6 +78,31 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="animate-pulse">
+      <div class="flex justify-between mb-4">
+        <div>
+          <div class="h-8 bg-verse-slate/10 rounded w-44 mb-2" />
+          <div class="h-4 bg-verse-slate/10 rounded w-56" />
+        </div>
+        <div class="h-10 bg-verse-slate/10 rounded w-36" />
+      </div>
+      <div class="flex gap-2 mb-2">
+        <div v-for="i in 4" :key="i" class="h-6 bg-verse-slate/10 rounded-full w-24" />
+      </div>
+      <div class="h-1.5 bg-verse-slate/10 rounded-full mb-4" />
+      <div class="space-y-4">
+        <div v-for="i in 3" :key="i" class="flex gap-3">
+          <div class="w-3 h-3 rounded-full bg-verse-slate/10 mt-1 shrink-0" />
+          <div class="flex-1 bg-white rounded-xl border border-verse-slate/10 p-4">
+            <div class="h-5 bg-verse-slate/10 rounded w-1/2 mb-2" />
+            <div class="h-4 bg-verse-slate/10 rounded w-3/4" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template v-else>
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
       <div>
         <h1 class="text-2xl font-serif text-verse-text">Marriage Roadmap</h1>
@@ -124,5 +154,6 @@ onMounted(() => {
         No milestones yet. Propose your first step forward.
       </p>
     </div>
+    </template>
   </div>
 </template>
