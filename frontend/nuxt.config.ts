@@ -18,7 +18,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'https://verse-api.alifpunya.com',
+      apiBase: 'https://verse-api.alifpunya.com', // overridden by NUXT_PUBLIC_API_BASE in .env
     },
   },
 })
