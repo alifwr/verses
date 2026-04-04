@@ -29,6 +29,21 @@ const hasMyAnswer = computed(() => !!props.question.my_answer)
 const hasPartnerAnswer = computed(() => !!props.question.partner_answer)
 const bothAnswered = computed(() => hasMyAnswer.value && hasPartnerAnswer.value)
 
+const askerColor = computed(() => {
+  if (props.question.asked_by === user.value?.id) {
+    return user.value?.username === 'alif' ? 'border-l-verse-slate' : 'border-l-verse-rose'
+  }
+  return user.value?.username === 'alif' ? 'border-l-verse-rose' : 'border-l-verse-slate'
+})
+
+const askerInitial = computed(() => props.question.asker_name[0])
+const askerAvatarColor = computed(() => {
+  if (props.question.asked_by === user.value?.id) {
+    return user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose'
+  }
+  return user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate'
+})
+
 function submitAnswer() {
   if (!answerText.value.trim()) return
   emit('answer', props.question.id, answerText.value)
@@ -38,11 +53,17 @@ function submitAnswer() {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5">
+  <div
+    class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 border-l-[3px] hover:shadow-md transition"
+    :class="askerColor"
+  >
     <div class="flex items-start justify-between mb-3 gap-2">
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <h3 class="font-serif text-base sm:text-lg text-verse-text">{{ question.text }}</h3>
-        <p class="text-xs text-verse-text/40 mt-1">Asked by {{ question.asker_name }}</p>
+        <div class="flex items-center gap-1.5 mt-1.5">
+          <span class="avatar-dot" :class="askerAvatarColor">{{ askerInitial }}</span>
+          <span class="text-xs text-verse-text/40">{{ question.asker_name }}</span>
+        </div>
       </div>
       <span
         v-if="bothAnswered"
@@ -53,25 +74,22 @@ function submitAnswer() {
     </div>
 
     <div class="space-y-3 mt-4">
-      <!-- My answer -->
-      <div v-if="hasMyAnswer" class="rounded-lg p-3 bg-verse-slate/5 border border-verse-slate/10">
+      <div v-if="hasMyAnswer" class="rounded-lg p-3 bg-verse-slate/5 border-l-[3px] border-l-verse-slate">
         <p class="text-xs font-medium text-verse-slate mb-1">Your answer</p>
         <p class="text-sm text-verse-text">{{ question.my_answer!.text }}</p>
       </div>
 
-      <!-- Partner answer - revealed or hidden -->
-      <div v-if="bothAnswered" class="rounded-lg p-3 bg-verse-rose/5 border border-verse-rose/10">
+      <div v-if="bothAnswered" class="rounded-lg p-3 bg-verse-rose/5 border-l-[3px] border-l-verse-rose">
         <p class="text-xs font-medium text-verse-rose mb-1">{{ partnerName }}'s answer</p>
         <p class="text-sm text-verse-text">{{ question.partner_answer!.text }}</p>
       </div>
       <MountainBackground v-else-if="!hasMyAnswer" />
 
-      <!-- Answer button / form -->
       <div v-if="!hasMyAnswer">
         <button
           v-if="!showAnswerForm"
           @click="showAnswerForm = true"
-          class="w-full py-2 text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition"
+          class="w-full py-2.5 text-sm rounded-lg border border-verse-slate/20 text-verse-slate hover:bg-verse-slate/5 transition animate-soft-pulse"
         >
           Write your answer
         </button>

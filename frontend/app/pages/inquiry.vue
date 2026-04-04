@@ -18,6 +18,7 @@ interface Question {
 }
 
 const { api } = useApi()
+const route = useRoute()
 const questions = ref<Question[]>([])
 const showNewForm = ref(false)
 const newText = ref('')
@@ -27,6 +28,12 @@ const pendingAction = ref<(() => Promise<void>) | null>(null)
 async function loadQuestions() {
   questions.value = await api<Question[]>('/questions')
 }
+
+const stats = computed(() => ({
+  total: questions.value.length,
+  revealed: questions.value.filter(q => q.my_answer && q.partner_answer).length,
+  awaiting: questions.value.filter(q => !q.my_answer).length,
+}))
 
 async function createQuestion(emergencyOverride = false) {
   try {
@@ -72,15 +79,19 @@ async function handleOverrideConfirm() {
   }
 }
 
-onMounted(loadQuestions)
+onMounted(() => {
+  loadQuestions()
+  if (route.query.new === '1') showNewForm.value = true
+})
 </script>
 
 <template>
   <div>
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
       <div>
         <h1 class="text-2xl font-serif text-verse-text">Inquiry Hub</h1>
-        <p class="text-sm text-verse-text/50 mt-1">Ask, reflect, then reveal together</p>
+        <div class="header-gradient-line w-10" />
+        <p class="text-sm text-verse-text/50 mt-2">Ask, reflect, then reveal together</p>
       </div>
       <button
         @click="showNewForm = !showNewForm"
@@ -88,6 +99,12 @@ onMounted(loadQuestions)
       >
         {{ showNewForm ? 'Cancel' : '+ New Question' }}
       </button>
+    </div>
+
+    <div class="flex gap-2 mb-4 flex-wrap">
+      <span class="stats-pill bg-verse-slate/10 text-verse-text/60">{{ stats.total }} total</span>
+      <span class="stats-pill bg-verse-gold/10 text-verse-gold">{{ stats.revealed }} revealed</span>
+      <span v-if="stats.awaiting" class="stats-pill bg-verse-rose/10 text-verse-rose">{{ stats.awaiting }} awaiting</span>
     </div>
 
     <form v-if="showNewForm" @submit.prevent="() => createQuestion()" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
