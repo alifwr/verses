@@ -6,25 +6,11 @@ from pydantic import BaseModel
 
 # --- Auth schemas ---
 
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-
-
-class TokenRefresh(BaseModel):
-    refresh_token: str
-
-
-class TokenOut(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
 class PartnerInfo(BaseModel):
     id: int
-    username: str
+    email: str
     display_name: str
+    avatar_url: Optional[str] = None
     is_online: bool
 
     model_config = {"from_attributes": True}
@@ -32,11 +18,30 @@ class PartnerInfo(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    username: str
+    email: str
     display_name: str
+    avatar_url: Optional[str] = None
+    has_partner: bool
     partner: Optional[PartnerInfo] = None
 
     model_config = {"from_attributes": True}
+
+
+class InviteCodeCreate(BaseModel):
+    pass
+
+
+class InviteCodeOut(BaseModel):
+    code: str
+    created_at: datetime
+    expires_at: datetime
+    is_used: bool
+
+    model_config = {"from_attributes": True}
+
+
+class InviteAccept(BaseModel):
+    code: str
 
 
 # --- Rules schemas ---
@@ -73,7 +78,7 @@ class AnswerCreate(BaseModel):
 class AnswerOut(BaseModel):
     id: int
     user_id: int
-    username: str
+    display_name: str
     text: str
     created_at: datetime
 
@@ -145,7 +150,7 @@ class TalkNoteCreate(BaseModel):
 class TalkNoteOut(BaseModel):
     id: int
     user_id: int
-    username: str
+    display_name: str
     text: str
     created_at: datetime
 
