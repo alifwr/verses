@@ -1,89 +1,128 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.auth import (
-    verify_password,
-    create_access_token,
-    create_refresh_token,
-    get_current_user,
-)
-from app.config import settings
+from app.supabase_auth import get_current_user
 from app.database import get_db
-from app.models import User
-from app.schemas import Token, TokenRefresh, TokenOut, UserOut
+from app.models import InviteCode, User, now_gmt7
+from app.schemas import InviteAccept, InviteCodeOut, UserOut, PartnerInfo
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=Token)
-async def login(request: Request, db: Session = Depends(get_db)):
-    """Accept either form data (OAuth2) or JSON body for flexibility."""
-    content_type = request.headers.get("content-type", "")
-
-    if "application/json" in content_type:
-        body = await request.json()
-        username = body.get("username")
-        password = body.get("password")
-    else:
-        # form data (application/x-www-form-urlencoded or multipart)
-        form = await request.form()
-        username = form.get("username")
-        password = form.get("password")
-
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect username or password",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    if not username or not password:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.username == username).first()
-    if not user or not verify_password(password, user.hashed_password):
-        raise credentials_exception
-
-    user.is_online = True
-    db.commit()
-    db.refresh(user)
-
-    access_token = create_access_token(data={"sub": user.username})
-    refresh_token = create_refresh_token(data={"sub": user.username})
-
-    return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-    )
-
-
-@router.post("/refresh", response_model=TokenOut)
-def refresh_token(body: TokenRefresh, db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or expired refresh token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(body.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        if payload.get("type") != "refresh":
-            raise credentials_exception
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.username == username).first()
-    if user is None:
-        raise credentials_exception
-
-    access_token = create_access_token(data={"sub": user.username})
-    return TokenOut(access_token=access_token, token_type="bearer")
-
-
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
-    return current_user
+    partner = None
+    if current_user.partner:
+        partner = PartnerInfo(
+            id=current_user.partner.id,
+            email=current_user.partner.email,
+            display_name=current_user.partner.display_name,
+            avatar_url=current_user.partner.avatar_url,
+            is_online=current_user.partner.is_online,
+        )
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        display_name=current_user.display_name,
+        avatar_url=current_user.avatar_url,
+        has_partner=current_user.partner_id is not None,
+        partner=partner,
+    )
+
+
+@router.post("/invite", response_model=InviteCodeOut, status_code=status.HTTP_201_CREATED)
+def create_invite(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.partner_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You already have a partner",
+        )
+
+    # Expire any existing unused invites from this user
+    existing = (
+        db.query(InviteCode)
+        .filter(InviteCode.created_by == current_user.id, InviteCode.used_by.is_(None))
+        .all()
+    )
+    for inv in existing:
+        db.delete(inv)
+
+    invite = InviteCode(
+        created_by=current_user.id,
+        expires_at=now_gmt7() + timedelta(days=7),
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+
+    return InviteCodeOut(
+        code=invite.code,
+        created_at=invite.created_at,
+        expires_at=invite.expires_at,
+        is_used=False,
+    )
+
+
+@router.post("/accept-invite", response_model=UserOut)
+def accept_invite(
+    body: InviteAccept,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.partner_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You already have a partner",
+        )
+
+    invite = (
+        db.query(InviteCode)
+        .filter(InviteCode.code == body.code, InviteCode.used_by.is_(None))
+        .first()
+    )
+    if invite is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid or expired invite code",
+        )
+
+    if invite.expires_at < now_gmt7():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invite code has expired",
+        )
+
+    if invite.created_by == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot accept your own invite",
+        )
+
+    # Pair the users
+    inviter = db.query(User).filter(User.id == invite.created_by).first()
+    current_user.partner_id = inviter.id
+    inviter.partner_id = current_user.id
+    invite.used_by = current_user.id
+    db.commit()
+    db.refresh(current_user)
+
+    partner = PartnerInfo(
+        id=inviter.id,
+        email=inviter.email,
+        display_name=inviter.display_name,
+        avatar_url=inviter.avatar_url,
+        is_online=inviter.is_online,
+    )
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        display_name=current_user.display_name,
+        avatar_url=current_user.avatar_url,
+        has_partner=True,
+        partner=partner,
+    )

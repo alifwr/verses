@@ -4,8 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import engine, SessionLocal, Base
-from app.seed import seed_users
+from app.database import engine, Base
 from app.routes.auth import router as auth_router
 from app.routes.rules import router as rules_router
 from app.routes.questions import router as questions_router
@@ -17,11 +16,6 @@ from app.routes.talks import router as talks_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_users(db)
-    finally:
-        db.close()
     yield
 
 
