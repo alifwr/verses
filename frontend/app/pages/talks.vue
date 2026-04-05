@@ -2,7 +2,7 @@
 interface TalkNote {
   id: number
   user_id: number
-  username: string
+  display_name: string
   text: string
   created_at: string
 }
@@ -68,14 +68,14 @@ function proposerInitial(talk: Talk): string {
 
 function proposerColor(talk: Talk): string {
   return talk.proposed_by === user.value?.id
-    ? (user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose')
-    : (user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate')
+    ? (user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose')
+    : (user.value?.display_name === 'Alif' ? 'bg-verse-rose' : 'bg-verse-slate')
 }
 
 function noteAuthorColor(note: TalkNote): string {
   return note.user_id === user.value?.id
-    ? (user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose')
-    : (user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate')
+    ? (user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose')
+    : (user.value?.display_name === 'Alif' ? 'bg-verse-rose' : 'bg-verse-slate')
 }
 
 function formatQueuedFor(dateStr: string | null): string {
@@ -230,10 +230,10 @@ onMounted(() => {
           <!-- Notes -->
           <div v-if="talk.notes.length" class="space-y-2 mb-3">
             <div v-for="note in talk.notes" :key="note.id" class="flex items-start gap-2">
-              <span class="avatar-dot text-[7px] mt-0.5 shrink-0" :class="noteAuthorColor(note)">{{ note.username[0] }}</span>
+              <span class="avatar-dot text-[7px] mt-0.5 shrink-0" :class="noteAuthorColor(note)">{{ note.display_name[0] }}</span>
               <div class="flex-1 min-w-0">
                 <p class="text-xs text-verse-text">{{ note.text }}</p>
-                <p class="text-[10px] text-verse-text/30">{{ note.username }}</p>
+                <p class="text-[10px] text-verse-text/30">{{ note.display_name }}</p>
               </div>
               <button
                 v-if="note.user_id === user?.id"

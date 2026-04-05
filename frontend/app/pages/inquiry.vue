@@ -2,7 +2,7 @@
 interface Answer {
   id: number
   user_id: number
-  username: string
+  display_name: string
   text: string
   created_at: string
 }

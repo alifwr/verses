@@ -16,7 +16,7 @@ const isActive = (path: string) => {
 }
 
 const userColor = computed(() =>
-  user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose'
+  user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose'
 )
 
 const partnerOnline = computed(() => user.value?.partner?.is_online ?? false)

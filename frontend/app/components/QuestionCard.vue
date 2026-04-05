@@ -2,7 +2,7 @@
 interface Answer {
   id: number
   user_id: number
-  username: string
+  display_name: string
   text: string
   created_at: string
 }
@@ -31,17 +31,17 @@ const bothAnswered = computed(() => hasMyAnswer.value && hasPartnerAnswer.value)
 
 const askerColor = computed(() => {
   if (props.question.asked_by === user.value?.id) {
-    return user.value?.username === 'alif' ? 'border-l-verse-slate' : 'border-l-verse-rose'
+    return user.value?.display_name === 'Alif' ? 'border-l-verse-slate' : 'border-l-verse-rose'
   }
-  return user.value?.username === 'alif' ? 'border-l-verse-rose' : 'border-l-verse-slate'
+  return user.value?.display_name === 'Alif' ? 'border-l-verse-rose' : 'border-l-verse-slate'
 })
 
 const askerInitial = computed(() => props.question.asker_name[0])
 const askerAvatarColor = computed(() => {
   if (props.question.asked_by === user.value?.id) {
-    return user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose'
+    return user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose'
   }
-  return user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate'
+  return user.value?.display_name === 'Alif' ? 'bg-verse-rose' : 'bg-verse-slate'
 })
 
 function submitAnswer() {

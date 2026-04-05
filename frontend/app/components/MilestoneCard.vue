@@ -43,16 +43,16 @@ const lineGradient = computed(() => {
 
 const proposerColor = computed(() => {
   if (props.milestone.proposed_by === user.value?.id) {
-    return user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose'
+    return user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose'
   }
-  return user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate'
+  return user.value?.display_name === 'Alif' ? 'bg-verse-rose' : 'bg-verse-slate'
 })
 
 const cardBorderColor = computed(() => {
   if (props.milestone.proposed_by === user.value?.id) {
-    return user.value?.username === 'alif' ? 'border-l-verse-slate' : 'border-l-verse-rose'
+    return user.value?.display_name === 'Alif' ? 'border-l-verse-slate' : 'border-l-verse-rose'
   }
-  return user.value?.username === 'alif' ? 'border-l-verse-rose' : 'border-l-verse-slate'
+  return user.value?.display_name === 'Alif' ? 'border-l-verse-rose' : 'border-l-verse-slate'
 })
 
 function formatDate(d: string | null) {

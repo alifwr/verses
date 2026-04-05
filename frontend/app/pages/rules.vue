@@ -60,8 +60,8 @@ function proposerInitial(rule: Rule): string {
 
 function proposerColor(rule: Rule): string {
   return rule.proposed_by === user.value?.id
-    ? (user.value?.username === 'alif' ? 'bg-verse-slate' : 'bg-verse-rose')
-    : (user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate')
+    ? (user.value?.display_name === 'Alif' ? 'bg-verse-slate' : 'bg-verse-rose')
+    : (user.value?.display_name === 'Alif' ? 'bg-verse-rose' : 'bg-verse-slate')
 }
 
 async function createRule() {
