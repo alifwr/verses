@@ -128,6 +128,7 @@ class Talk(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     proposed_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="queued", nullable=False)
+    queued_for: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     proposer: Mapped["User"] = relationship("User", foreign_keys=[proposed_by])

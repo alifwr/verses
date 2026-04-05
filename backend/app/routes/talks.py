@@ -37,6 +37,7 @@ def talk_to_out(talk: Talk) -> TalkOut:
         proposed_by=talk.proposed_by,
         proposer_name=talk.proposer.display_name,
         status=talk.status,
+        queued_for=talk.queued_for,
         notes=[note_to_out(n) for n in talk.notes],
         note_count=len(talk.notes),
         created_at=talk.created_at,
@@ -65,6 +66,7 @@ def create_talk(
     talk = Talk(
         title=body.title,
         description=body.description,
+        queued_for=body.queued_for,
         proposed_by=current_user.id,
     )
     db.add(talk)
@@ -96,6 +98,8 @@ def update_talk(
         talk.title = body.title
     if body.description is not None:
         talk.description = body.description
+    if body.queued_for is not None:
+        talk.queued_for = body.queued_for
 
     db.commit()
     db.refresh(talk)

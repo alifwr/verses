@@ -128,12 +128,14 @@ class MilestoneOut(BaseModel):
 class TalkCreate(BaseModel):
     title: str
     description: Optional[str] = None
+    queued_for: Optional[datetime] = None
 
 
 class TalkUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
+    queued_for: Optional[datetime] = None
 
 
 class TalkNoteCreate(BaseModel):
@@ -157,6 +159,7 @@ class TalkOut(BaseModel):
     proposed_by: int
     proposer_name: str
     status: str
+    queued_for: Optional[datetime] = None
     notes: list[TalkNoteOut] = []
     note_count: int
     created_at: datetime
