@@ -1,9 +1,20 @@
+import { useSupabaseClient } from '~/utils/supabase'
+
 export default defineNuxtPlugin(async () => {
-  const { fetchUser, token, refresh, refreshToken } = useAuth()
-  if (token.value) {
+  const supabase = useSupabaseClient()
+  const { fetchUser } = useAuth()
+
+  const { data } = await supabase.auth.getSession()
+  if (data.session) {
     await fetchUser()
   }
-  if (!token.value && refreshToken.value) {
-    await refresh()
-  }
+
+  supabase.auth.onAuthStateChange(async (event) => {
+    if (event === 'SIGNED_IN') {
+      await fetchUser()
+    } else if (event === 'SIGNED_OUT') {
+      const { user } = useAuth()
+      user.value = null
+    }
+  })
 })
