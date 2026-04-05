@@ -1,5 +1,5 @@
 export const useApi = () => {
-  const { token, refresh, logout } = useAuth()
+  const { getAccessToken, logout } = useAuth()
   const config = useRuntimeConfig()
 
   async function api<T>(path: string, options: any = {}): Promise<T> {
@@ -7,8 +7,9 @@ export const useApi = () => {
       ...(options.headers || {}),
     }
 
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
+    const token = await getAccessToken()
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
@@ -23,15 +24,7 @@ export const useApi = () => {
       })
     } catch (error: any) {
       if (error?.status === 401 || error?.statusCode === 401) {
-        const refreshed = await refresh()
-        if (refreshed) {
-          headers['Authorization'] = `Bearer ${token.value}`
-          return await $fetch<T>(`${config.public.apiBase}${path}`, {
-            ...options,
-            headers,
-          })
-        }
-        logout()
+        await logout()
       }
       throw error
     }

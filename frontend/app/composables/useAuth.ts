@@ -1,80 +1,65 @@
-interface User {
+import { useSupabaseClient } from '~/utils/supabase'
+
+interface Partner {
   id: number
-  username: string
+  email: string
   display_name: string
-  partner: {
-    id: number
-    username: string
-    display_name: string
-    is_online: boolean
-  } | null
+  avatar_url: string | null
+  is_online: boolean
 }
 
-interface LoginResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
+interface User {
+  id: number
+  email: string
+  display_name: string
+  avatar_url: string | null
+  has_partner: boolean
+  partner: Partner | null
 }
 
 export const useAuth = () => {
   const user = useState<User | null>('auth-user', () => null)
-  const token = useCookie('verse-token')
-  const refreshToken = useCookie('verse-refresh-token')
   const config = useRuntimeConfig()
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!user.value)
+  const hasPartner = computed(() => !!user.value?.has_partner)
 
-  async function login(username: string, password: string): Promise<void> {
-    const formData = new URLSearchParams()
-    formData.append('username', username)
-    formData.append('password', password)
+  async function getAccessToken(): Promise<string | null> {
+    const supabase = useSupabaseClient()
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token ?? null
+  }
 
-    const data = await $fetch<LoginResponse>(`${config.public.apiBase}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData.toString(),
+  async function signInWithGoogle(): Promise<void> {
+    const supabase = useSupabaseClient()
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
-
-    token.value = data.access_token
-    refreshToken.value = data.refresh_token
-    await fetchUser()
   }
 
   async function fetchUser(): Promise<void> {
-    if (!token.value) return
+    const token = await getAccessToken()
+    if (!token) return
+
     try {
       const data = await $fetch<User>(`${config.public.apiBase}/auth/me`, {
-        headers: { Authorization: `Bearer ${token.value}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       user.value = data
     } catch {
-      token.value = null
       user.value = null
     }
   }
 
-  async function refresh(): Promise<boolean> {
-    if (!refreshToken.value) return false
-    try {
-      const data = await $fetch<{ access_token: string }>(`${config.public.apiBase}/auth/refresh`, {
-        method: 'POST',
-        body: { refresh_token: refreshToken.value },
-      })
-      token.value = data.access_token
-      await fetchUser()
-      return true
-    } catch {
-      logout()
-      return false
-    }
-  }
-
-  function logout(): void {
-    token.value = null
-    refreshToken.value = null
+  async function logout(): Promise<void> {
+    const supabase = useSupabaseClient()
+    await supabase.auth.signOut()
     user.value = null
     navigateTo('/login')
   }
 
-  return { user, token, refreshToken, isAuthenticated, login, logout, fetchUser, refresh }
+  return { user, isAuthenticated, hasPartner, getAccessToken, signInWithGoogle, fetchUser, logout }
 }
