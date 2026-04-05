@@ -7,11 +7,11 @@ services:
     depends_on:
       - tunnel
     environment:
-      - DATABASE_URL=${BACKEND_DATABASE_URL:-sqlite:///./data/verse.db}
-      - SECRET_KEY=${BACKEND_SECRET_KEY:-verse-secret-key-change-in-production}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
       - CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-http://localhost:3742}
-    volumes:
-      - db-data:/app/data
     restart: unless-stopped
 
   frontend:
@@ -19,6 +19,8 @@ services:
       context: ./frontend
       args:
         NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-https://verse-api.alifpunya.com}
+        NUXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL}
+        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
     container_name: verse-frontend
     ports:
       - "3742:3000"
@@ -32,6 +34,3 @@ services:
     container_name: verse-tunnel
     restart: always
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
-
-volumes:
-  db-data:
