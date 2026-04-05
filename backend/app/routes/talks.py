@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 
-from app.auth import get_current_user
+from app.supabase_auth import get_current_user
 from app.database import get_db
 from app.models import Talk, TalkNote, User
 from app.schemas import TalkCreate, TalkNoteCreate, TalkNoteOut, TalkOut, TalkUpdate
@@ -23,7 +23,7 @@ def note_to_out(note: TalkNote) -> TalkNoteOut:
     return TalkNoteOut(
         id=note.id,
         user_id=note.user_id,
-        username=note.user.display_name,
+        display_name=note.user.display_name,
         text=note.text,
         created_at=note.created_at,
     )

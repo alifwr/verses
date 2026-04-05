@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.supabase_auth import get_current_user
 from app.database import get_db
 from app.models import Answer, Question, User
 from app.schemas import AnswerCreate, AnswerOut, QuestionCreate, QuestionOut
@@ -13,7 +13,7 @@ def answer_to_out(answer: Answer) -> AnswerOut:
     return AnswerOut(
         id=answer.id,
         user_id=answer.user_id,
-        username=answer.user.username,
+        display_name=answer.user.display_name,
         text=answer.text,
         created_at=answer.created_at,
     )

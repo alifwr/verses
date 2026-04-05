@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import nulls_last
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.supabase_auth import get_current_user
 from app.database import get_db
 from app.models import Milestone, MilestoneApproval, User
 from app.schemas import MilestoneCreate, MilestoneOut, MilestoneUpdate
