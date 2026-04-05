@@ -4,6 +4,8 @@ services:
     container_name: verse-backend
     ports:
       - "8742:8000"
+    depends_on:
+      - tunnel
     environment:
       - DATABASE_URL=${BACKEND_DATABASE_URL:-sqlite:///./data/verse.db}
       - SECRET_KEY=${BACKEND_SECRET_KEY:-verse-secret-key-change-in-production}
@@ -22,6 +24,7 @@ services:
       - "3742:3000"
     depends_on:
       - backend
+      - tunnel
     restart: unless-stopped
 
   tunnel:
