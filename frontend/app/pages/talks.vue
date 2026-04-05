@@ -14,6 +14,7 @@ interface Talk {
   proposed_by: number
   proposer_name: string
   status: string
+  queued_for: string | null
   notes: TalkNote[]
   note_count: number
   created_at: string
@@ -28,6 +29,7 @@ const filter = ref<'all' | 'queued' | 'follow_up' | 'discussed'>('all')
 const showNewForm = ref(false)
 const newTitle = ref('')
 const newDesc = ref('')
+const newQueuedFor = ref('')
 const expandedId = ref<number | null>(null)
 const noteTexts = ref<Record<number, string>>({})
 
@@ -76,13 +78,24 @@ function noteAuthorColor(note: TalkNote): string {
     : (user.value?.username === 'alif' ? 'bg-verse-rose' : 'bg-verse-slate')
 }
 
+function formatQueuedFor(dateStr: string | null): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
 async function createTalk() {
   await api('/talks', {
     method: 'POST',
-    body: { title: newTitle.value, description: newDesc.value || null },
+    body: {
+      title: newTitle.value,
+      description: newDesc.value || null,
+      queued_for: newQueuedFor.value || null,
+    },
   })
   newTitle.value = ''
   newDesc.value = ''
+  newQueuedFor.value = ''
   showNewForm.value = false
   await loadTalks()
 }
@@ -168,6 +181,10 @@ onMounted(() => {
     <form v-if="showNewForm" @submit.prevent="createTalk" class="bg-white rounded-xl border border-verse-slate/10 p-4 sm:p-5 mb-6">
       <input v-model="newTitle" placeholder="What do you need to discuss?" required class="w-full px-3 py-2 rounded-lg border border-verse-slate/20 mb-3 focus:outline-none focus:ring-2 focus:ring-verse-slate/30 text-sm" />
       <textarea v-model="newDesc" placeholder="Add context (optional)" rows="2" class="w-full px-3 py-2 rounded-lg border border-verse-slate/20 mb-3 focus:outline-none focus:ring-2 focus:ring-verse-slate/30 resize-none text-sm" />
+      <div class="mb-3">
+        <label class="block text-xs text-verse-text/50 mb-1">Discuss by (optional)</label>
+        <input v-model="newQueuedFor" type="datetime-local" class="w-full px-3 py-2 rounded-lg border border-verse-slate/20 focus:outline-none focus:ring-2 focus:ring-verse-slate/30 text-sm text-verse-text/70" />
+      </div>
       <button type="submit" class="px-4 py-2 bg-verse-slate text-white text-sm rounded-lg hover:bg-verse-slate/90 transition">Queue Talk</button>
     </form>
 
@@ -195,6 +212,7 @@ onMounted(() => {
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <span class="avatar-dot shrink-0" :class="proposerColor(talk)">{{ proposerInitial(talk) }}</span>
             <span class="text-sm font-medium text-verse-text truncate">{{ talk.title }}</span>
+            <span v-if="talk.queued_for" class="text-[10px] text-verse-slate/50 shrink-0 hidden sm:inline">📅 {{ formatQueuedFor(talk.queued_for) }}</span>
             <span v-if="talk.note_count" class="text-xs text-verse-text/30">{{ talk.note_count }} notes</span>
           </div>
           <span
@@ -206,6 +224,7 @@ onMounted(() => {
         </div>
 
         <div v-if="expandedId === talk.id" class="mt-3 pt-3 border-t border-verse-slate/5">
+          <p v-if="talk.queued_for" class="text-xs text-verse-text/40 mb-2 sm:hidden">📅 Discuss by: {{ formatQueuedFor(talk.queued_for) }}</p>
           <p v-if="talk.description" class="text-xs text-verse-text/60 mb-3">{{ talk.description }}</p>
 
           <!-- Notes -->
