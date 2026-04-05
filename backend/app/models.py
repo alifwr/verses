@@ -1,5 +1,6 @@
 from datetime import datetime, date, timezone, timedelta
 from typing import Optional, List
+import secrets
 
 from sqlalchemy import String, Boolean, DateTime, Date, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,32 +14,37 @@ def now_gmt7() -> datetime:
     return datetime.now(GMT7)
 
 
+def generate_invite_code() -> str:
+    return secrets.token_urlsafe(8)
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    supabase_uid: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     partner_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     is_online: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
 
     partner: Mapped[Optional["User"]] = relationship("User", remote_side="User.id", foreign_keys=[partner_id])
-    sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user")
 
 
-class Session(Base):
-    __tablename__ = "sessions"
+class InviteCode(Base):
+    __tablename__ = "invite_codes"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    token: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, default=generate_invite_code)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    used_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_gmt7)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="sessions")
+    creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
+    acceptor: Mapped[Optional["User"]] = relationship("User", foreign_keys=[used_by])
 
 
 class Rule(Base):
