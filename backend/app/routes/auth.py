@@ -91,7 +91,12 @@ def accept_invite(
             detail="Invalid or expired invite code",
         )
 
-    if invite.expires_at < now_gmt7():
+    now = now_gmt7()
+    expires = invite.expires_at
+    # Handle SQLite returning naive datetimes vs PostgreSQL returning tz-aware
+    if expires.tzinfo is None:
+        now = now.replace(tzinfo=None)
+    if expires < now:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invite code has expired",
