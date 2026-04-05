@@ -1,4 +1,6 @@
+import logging
 import jwt
+from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -7,15 +9,22 @@ from app.config import settings
 from app.database import get_db
 from app.models import User
 
+logger = logging.getLogger(__name__)
+
 security = HTTPBearer()
+
+jwks_client = PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+
+ALLOWED_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA", "HS256"]
 
 
 def decode_supabase_jwt(token: str) -> dict:
     try:
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=ALLOWED_ALGORITHMS,
             audience="authenticated",
         )
         return payload
@@ -24,10 +33,17 @@ def decode_supabase_jwt(token: str) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
         )
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.error(f"JWT decode failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail=f"Invalid token: {e}",
+        )
+    except Exception as e:
+        logger.error(f"Unexpected auth error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Auth error: {e}",
         )
 
 
@@ -45,7 +61,6 @@ def get_current_user(
 
     user = db.query(User).filter(User.supabase_uid == supabase_uid).first()
     if user is None:
-        # Auto-create user on first login
         email = payload.get("email", "")
         user_metadata = payload.get("user_metadata", {})
         display_name = user_metadata.get("full_name") or user_metadata.get("name") or email.split("@")[0]

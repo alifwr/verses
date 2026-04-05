@@ -43,14 +43,19 @@ def create_invite(
             detail="You already have a partner",
         )
 
-    # Expire any existing unused invites from this user
+    # Return existing unused invite if one exists
     existing = (
         db.query(InviteCode)
         .filter(InviteCode.created_by == current_user.id, InviteCode.used_by.is_(None))
-        .all()
+        .first()
     )
-    for inv in existing:
-        db.delete(inv)
+    if existing is not None:
+        return InviteCodeOut(
+            code=existing.code,
+            created_at=existing.created_at,
+            expires_at=existing.expires_at,
+            is_used=False,
+        )
 
     invite = InviteCode(
         created_by=current_user.id,

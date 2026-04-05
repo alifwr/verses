@@ -10,9 +10,18 @@ onMounted(async () => {
   try {
     const supabase = useSupabaseClient()
 
-    // Supabase will parse the hash fragment automatically
-    const { error: authError } = await supabase.auth.getSession()
-    if (authError) throw authError
+    // Handle PKCE code exchange (default Supabase flow)
+    const url = new URL(window.location.href)
+    const code = url.searchParams.get('code')
+    if (code) {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      if (exchangeError) throw exchangeError
+    }
+
+    // Verify we have a session
+    const { data, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError) throw sessionError
+    if (!data.session) throw new Error('No session established')
 
     await fetchUser()
 
@@ -20,7 +29,14 @@ onMounted(async () => {
     if (user.value?.has_partner) {
       navigateTo('/rules')
     } else {
-      navigateTo('/invite')
+      // Restore invite code saved before login redirect
+      const savedCode = localStorage.getItem('verse-invite-code')
+      if (savedCode) {
+        localStorage.removeItem('verse-invite-code')
+        navigateTo(`/invite?code=${savedCode}`)
+      } else {
+        navigateTo('/invite')
+      }
     }
   } catch (e: any) {
     error.value = e.message || 'Authentication failed'
